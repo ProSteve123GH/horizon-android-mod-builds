@@ -282,7 +282,9 @@ def copy_tree(src: pathlib.Path, dst: pathlib.Path) -> None:
 
 
 def ndk_bin() -> pathlib.Path:
-    base = pathlib.Path(os.environ.get("ANDROID_HOME", str(pathlib.Path.home() / "android")))
+    # tools.sh installs the NDK under ~/android/ndk/<version>. Do not trust
+    # ANDROID_HOME here: the runner ships its own (deleted by room.sh).
+    base = pathlib.Path(os.environ.get("MODBUILD_ANDROID", str(pathlib.Path.home() / "android")))
     return base / "ndk" / NDK_VERSION / "toolchains" / "llvm" / "prebuilt" / "linux-x86_64" / "bin"
 
 

@@ -15,6 +15,9 @@ ANDROID_HOME="$HOME/android"
 NDK_VERSION="28.2.13676358"
 
 mkdir -p "$MODBUILD"/{source,base,cargo,jobs,result}
+# The runner ships its own ANDROID_HOME (a preinstalled, much larger SDK);
+# point everything at the minimal tree we just made.
+echo "ANDROID_HOME=$ANDROID_HOME" >> "${GITHUB_ENV:-/dev/null}"
 mkdir -p "$ANDROID_HOME/cmdline-tools"
 
 # --- rustup -----------------------------------------------------------------
