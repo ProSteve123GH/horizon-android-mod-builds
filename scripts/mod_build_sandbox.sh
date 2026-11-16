@@ -12,7 +12,7 @@
 # filesystem-confined.
 set -uo pipefail
 
-MODBUILD="${MODBUILD:-$HOME/modbuild}"
+export MODBUILD="${MODBUILD:-$HOME/modbuild}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 run_bwrap() {
@@ -40,19 +40,19 @@ run_bwrap() {
 if command -v bwrap >/dev/null 2>&1; then
   run_bwrap
   code=$?
-  if [ "$code" -ne 0 ] && ! sudo -n true 2>/dev/null; then
-    echo "sandbox: bwrap exited $code and no passwordless sudo; failing" >&2
-    exit "$code"
-  fi
   if [ "$code" -eq 0 ]; then
     exit 0
   fi
+  if ! sudo -n true 2>/dev/null; then
+    echo "sandbox: bwrap exited $code and no passwordless sudo; failing" >&2
+    exit "$code"
+  fi
   echo "WARNING: bwrap failed ($code); falling back to network-only isolation (NO filesystem confinement)" >&2
-  exec sudo -E unshare --net python3 "$SCRIPT_DIR/mod_build_once.py"
+  exec sudo -E MODBUILD="$MODBUILD" HOME="$HOME" unshare --net python3 "$SCRIPT_DIR/mod_build_once.py"
 fi
 
 echo "WARNING: bwrap not found; falling back to network-only isolation (NO filesystem confinement)" >&2
 if sudo -n true 2>/dev/null; then
-  exec sudo -E unshare --net python3 "$SCRIPT_DIR/mod_build_once.py"
+  exec sudo -E MODBUILD="$MODBUILD" HOME="$HOME" unshare --net python3 "$SCRIPT_DIR/mod_build_once.py"
 fi
 exec unshare --net python3 "$SCRIPT_DIR/mod_build_once.py"
