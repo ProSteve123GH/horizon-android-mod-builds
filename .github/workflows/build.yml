@@ -31,6 +31,7 @@ jobs:
         run: bash scripts/room.sh
 
       - name: Resolve commit
+        id: prepare
         env:
           VERSION: ${{ inputs.version }}
         run: bash scripts/prepare.sh "$VERSION"
@@ -43,22 +44,25 @@ jobs:
             ~/android
             ~/modbuild/cargo
             ~/modbuild/base
-          key: base-${{ env.COMMIT }}
+          key: base-${{ steps.prepare.outputs.commit }}
           fail-on-miss: true
 
       - name: Install bwrap
         run: sudo apt-get update && sudo apt-get install -y bubblewrap
 
+      # COMMIT is already in the environment of later steps via $GITHUB_ENV
+      # (written by prepare.sh); set it explicitly anyway for clarity and to
+      # keep it visible if GITHUB_ENV wiring ever changes.
       - name: Unseal mods
         env:
-          COMMIT: ${{ env.COMMIT }}
+          COMMIT: ${{ steps.prepare.outputs.commit }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/unseal.sh
 
       - name: Sandbox build
         env:
-          COMMIT: ${{ env.COMMIT }}
+          COMMIT: ${{ steps.prepare.outputs.commit }}
           VERSION: ${{ inputs.version }}
         run: bash scripts/mod_build_sandbox.sh
 

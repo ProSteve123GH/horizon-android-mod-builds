@@ -30,4 +30,8 @@ git -C "$SRC" fetch --depth 1 origin "$COMMIT"
 git -C "$SRC" checkout -q FETCH_HEAD
 
 echo "COMMIT=$COMMIT" >> "${GITHUB_ENV:-/dev/null}"
+# And as a step output for workflow expressions (cache keys, expressions).
+if [ -n "${GITHUB_OUTPUT:-}" ]; then
+  echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+fi
 echo "COMMIT=$COMMIT"

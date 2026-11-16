@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Resolve commit
+        id: prepare
         env:
           VERSION: ${{ inputs.version }}
         run: bash scripts/prepare.sh "$VERSION"
@@ -37,4 +38,4 @@ jobs:
             ~/android
             ~/modbuild/cargo
             ~/modbuild/base
-          key: base-${{ env.COMMIT }}
+          key: base-${{ steps.prepare.outputs.commit }}
