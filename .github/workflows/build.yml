@@ -48,7 +48,13 @@ jobs:
           fail-on-miss: true
 
       - name: Install bwrap
-        run: sudo apt-get update && sudo apt-get install -y bubblewrap
+        # Ubuntu 24.04 mediates unprivileged user namespaces with AppArmor,
+        # which breaks bwrap's loopback setup inside a fresh net namespace
+        # ("loopback: Failed RTM_NEWADDR"). This sysctl allows them (and is
+        # a no-op elsewhere).
+        run: |
+          sudo apt-get update && sudo apt-get install -y bubblewrap
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
 
       # COMMIT is already in the environment of later steps via $GITHUB_ENV
       # (written by prepare.sh); set it explicitly anyway for clarity and to

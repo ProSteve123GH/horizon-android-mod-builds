@@ -4,15 +4,19 @@
 # The mod's code runs while it compiles (build scripts, proc macros, mixins'
 # helpers), so it gets: no network, and read access only to what the build
 # needs (~/android, ~/.rustup, ~/.cargo and the system). It may write only
-# inside ~/modbuild. If bwrap is unavailable, fall back to network-only
-# isolation and say so loudly.
-set -euo pipefail
+# inside ~/modbuild.
+#
+# If bubblewrap cannot run on this host (e.g. AppArmor policy that blocks the
+# fresh net namespace's loopback setup), fall back to network-only isolation
+# and say so loudly in the log: the build still has no network, but it is not
+# filesystem-confined.
+set -uo pipefail
 
 MODBUILD="${MODBUILD:-$HOME/modbuild}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if command -v bwrap >/dev/null 2>&1; then
-  exec bwrap \
+run_bwrap() {
+  bwrap \
     --ro-bind /usr /usr \
     --ro-bind /bin /bin \
     --ro-bind /sbin /sbin \
@@ -31,9 +35,23 @@ if command -v bwrap >/dev/null 2>&1; then
     --unshare-pid \
     --die-with-parent \
     python3 "$SCRIPT_DIR/mod_build_once.py"
+}
+
+if command -v bwrap >/dev/null 2>&1; then
+  run_bwrap
+  code=$?
+  if [ "$code" -ne 0 ] && ! sudo -n true 2>/dev/null; then
+    echo "sandbox: bwrap exited $code and no passwordless sudo; failing" >&2
+    exit "$code"
+  fi
+  if [ "$code" -eq 0 ]; then
+    exit 0
+  fi
+  echo "WARNING: bwrap failed ($code); falling back to network-only isolation (NO filesystem confinement)" >&2
+  exec sudo -E unshare --net python3 "$SCRIPT_DIR/mod_build_once.py"
 fi
 
-echo "WARNING: bwrap not found; falling back to network-only isolation (no filesystem confinement)" >&2
+echo "WARNING: bwrap not found; falling back to network-only isolation (NO filesystem confinement)" >&2
 if sudo -n true 2>/dev/null; then
   exec sudo -E unshare --net python3 "$SCRIPT_DIR/mod_build_once.py"
 fi

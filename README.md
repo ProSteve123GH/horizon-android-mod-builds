@@ -62,7 +62,10 @@ game repository, not here.
 ## Security model
 
 - **Mod code is untrusted.** It runs only inside `build.yml`'s sandbox: no network, no filesystem writes outside
-  `~/modbuild`, read-only elsewhere. The build job's token has `contents: read` on this repository only.
+  `~/modbuild`, read-only elsewhere (bubblewrap). On hosts where bubblewrap cannot create its net namespace
+  (e.g. restrictive AppArmor), the build falls back to network-only isolation with a loud warning in the log —
+  no network, but the filesystem is not confined. The build job's token has `contents: read` on this repository
+  only.
 - **Publishing is separated.** `publish.py` never runs mod code; it only verifies bytes and moves artifacts.
   Its job has `contents: write` so it can upload to releases.
 - **The key never persists.** It is generated per request, lives in workflow inputs and process memory, is
