@@ -1,6 +1,6 @@
-# The fixture's mixin manifest. The `horizon_revision` pin below is a placeholder:
-# the build service rewrites it to the commit being built before applying the
-# bundle, so it builds on whatever the game pins in versions.json.
+// The fixture's mixin manifest. The `horizon_revision` pin below is a placeholder:
+// the build service rewrites it to the commit being built before applying the
+// bundle, so it builds on whatever the game pins in versions.json.
 [mod]
 id = "hello_mod"
 version = "0.1.0"
@@ -11,6 +11,9 @@ horizon_revision = "0000000000000000000000000000000000000000"
 # One HEAD hook on the HUD hook point (native-hooks.json: "hud", version 1,
 # horizon_client::game::native_hooks::Game<'_>::native_hud). The helper compiles
 # as a local function inside `native_hud`; binding names become its parameters.
+# Types must resolve in both compilation trees that include game/ (the
+# horizon-client bin and the Android cdylib): `horizon_client::…` is the
+# re-exported lib.
 [[injection]]
 id = "hud"
 hook = "hud"
@@ -18,6 +21,6 @@ hook_version = 1
 kind = "HEAD"
 helper = "hello.rs"
 bindings = [
-  { name = "batch", ty = "&mut crate::hud::HudBatch", value = "batch" },
-  { name = "corners", ty = "&mut crate::extras_hud::Corners", value = "corners" },
+  { name = "batch", ty = "&mut horizon_client::hud::HudBatch", value = "batch" },
+  { name = "corners", ty = "&mut horizon_client::extras_hud::Corners", value = "corners" },
 ]
