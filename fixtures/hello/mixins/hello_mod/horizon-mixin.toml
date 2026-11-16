@@ -1,6 +1,6 @@
-// The fixture's mixin manifest. The `horizon_revision` pin below is a placeholder:
-// the build service rewrites it to the commit being built before applying the
-// bundle, so it builds on whatever the game pins in versions.json.
+# The fixture's mixin manifest. The horizon_revision pin below is a placeholder:
+# the build service rewrites it to the commit being built before applying the
+# bundle, so it builds on whatever the game pins in versions.json.
 [mod]
 id = "hello_mod"
 version = "0.1.0"
