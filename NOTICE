@@ -1,0 +1,27 @@
+Notices and attribution
+=======================
+
+This repository is an independent reimplementation. No source code was copied
+from any other project. The architecture was studied from public documentation:
+
+- starling-client/starling (MIT, https://github.com/starling-client/starling):
+  the native-mod build flow (a player's mods are sealed, a CI job compiles the
+  game with them in a sandbox, a second job publishes the result). The general
+  shape of that flow is credited here. Starling is MIT licensed; this project
+  shares architecture only and no Starling source text.
+- starling-client/mod-builds (no license file): the public README of that
+  repository documents the service design (job ids as content addresses of
+  version+commit+body, sealed request assets, a base build cache, per-address
+  quotas). This project follows that public design with original code and its
+  own wording. Any similarity is architectural and intentional; no code was
+  taken from that repository.
+- horizon-mixins (MIT, https://github.com/horizon-rust/horizon-mixins) by
+  levzzz5154: the mixin tool used to apply native mod bundles to Horizon's
+  source at build time. It is installed at a pinned revision
+  (ddd9700b21997c95d95ac6ee5ecafe3830cf622a) by the base workflow.
+- Horizon (https://github.com/horizon-rust/horizon) by horizon-rust and its
+  contributors: the game this service recompiles. The Android fork built here
+  is ProSteve123GH/horizon-android-old.
+
+This project is a personal, unofficial build service. It is not affiliated
+with, endorsed by, or connected to Starling, horizon-rust, or Mojang.

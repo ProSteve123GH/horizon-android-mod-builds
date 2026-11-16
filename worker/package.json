@@ -1,0 +1,13 @@
+{
+  "name": "horizon-android-mod-builds-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Compile service for Horizon Android native mods: seals mod bundles, dispatches CI builds, serves results.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

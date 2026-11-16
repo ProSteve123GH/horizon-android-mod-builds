@@ -1,0 +1,14 @@
+name = "horizon-android-mod-builds"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+
+# The repository builds live in and releases are read from. Must stay in sync
+# with the repo this worker is deployed from.
+[vars]
+REPO = "ProSteve123GH/horizon-android-mod-builds"
+
+# Per-day quotas. These are enforced per worker isolate (in-memory), so they
+# are an approximation, not a hard global ceiling; GitHub's own per-account
+# Actions concurrency is the hard backstop. Override in [vars] if needed.
+# PER_ADDRESS = "32"
+# PER_DAY = "1500"

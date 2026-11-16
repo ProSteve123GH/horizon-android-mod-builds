@@ -1,0 +1,40 @@
+name: base
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Game version from versions.json"
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  base:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve commit
+        env:
+          VERSION: ${{ inputs.version }}
+        run: bash scripts/prepare.sh "$VERSION"
+
+      - name: Make room
+        run: bash scripts/room.sh
+
+      - name: Install base dependencies
+        run: bash scripts/tools.sh
+
+      - name: Seed build (no mods)
+        run: MODBUILD_TARGET="$HOME/modbuild/base" COMMIT="$COMMIT" VERSION="${{ inputs.version }}" python3 scripts/mod_build_once.py
+
+      - name: Save base cache
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.rustup
+            ~/android
+            ~/modbuild/cargo
+            ~/modbuild/base
+          key: base-${{ env.COMMIT }}

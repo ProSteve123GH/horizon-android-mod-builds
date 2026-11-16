@@ -1,0 +1,27 @@
+name: test
+on:
+  push:
+  pull_request:
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell syntax
+        run: |
+          for f in scripts/*.sh; do
+            bash -n "$f"
+          done
+          echo "shell ok"
+
+      - name: Python syntax and unit tests
+        run: |
+          python3 -m py_compile scripts/*.py
+          python3 scripts/test_mod_build.py
+
+      - name: Worker unit tests
+        working-directory: worker
+        run: |
+          npm ci --no-audit --no-fund
+          npm test

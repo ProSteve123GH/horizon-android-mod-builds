@@ -1,0 +1,97 @@
+name: build
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "24-hex job id (content address of version+commit+body)"
+        required: true
+        type: string
+      ask:
+        description: "32-hex random name of the sealed asset in the requests release"
+        required: true
+        type: string
+      key:
+        description: "AES-256-CTR key (64 hex) for the sealed asset; never logged"
+        required: true
+        type: string
+      version:
+        description: "Game version from versions.json"
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make room
+        run: bash scripts/room.sh
+
+      - name: Resolve commit
+        env:
+          VERSION: ${{ inputs.version }}
+        run: bash scripts/prepare.sh "$VERSION"
+
+      - name: Restore base cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.rustup
+            ~/android
+            ~/modbuild/cargo
+            ~/modbuild/base
+          key: base-${{ env.COMMIT }}
+          fail-on-miss: true
+
+      - name: Install bwrap
+        run: sudo apt-get update && sudo apt-get install -y bubblewrap
+
+      - name: Unseal mods
+        env:
+          COMMIT: ${{ env.COMMIT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/unseal.sh
+
+      - name: Sandbox build
+        env:
+          COMMIT: ${{ env.COMMIT }}
+          VERSION: ${{ inputs.version }}
+        run: bash scripts/mod_build_sandbox.sh
+
+      - name: Upload result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: result
+          path: ~/modbuild/result
+          retention-days: 1
+          if-no-files-found: ignore
+
+  publish:
+    needs: build
+    if: always()
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download result artifact
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: result
+          path: ~/modbuild/result
+
+      - name: Publish result
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          JOB: ${{ inputs.job }}
+          ASK: ${{ inputs.ask }}
+        run: python3 scripts/publish.py
