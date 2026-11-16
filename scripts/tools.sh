@@ -40,7 +40,15 @@ fi
 yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
 "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$NDK_VERSION"
 
-# --- cargo helpers ------------------------------------------------------------
+# Warm the registry cache + sparse index with every locked dependency of the
+# pinned source, so mod builds (sandboxed, no network) never download.
+if [ -f "$HOME/modbuild/source/Cargo.toml" ]; then
+  cargo fetch --locked --manifest-path "$HOME/modbuild/source/Cargo.toml"
+  cargo fetch --locked --manifest-path "$HOME/modbuild/source/Cargo.toml" --target aarch64-linux-android
+else
+  echo "tools.sh: no source checkout yet; skipping dependency fetch"
+fi
+
 cargo install --locked cargo-ndk || true
 cargo install --locked --git https://github.com/horizon-rust/horizon-mixins \
   --rev ddd9700b21997c95d95ac6ee5ecafe3830cf622a horizon-mixins-cli

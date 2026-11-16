@@ -301,7 +301,10 @@ def cargo_env(target_dir: pathlib.Path) -> dict:
     env[f"AR_{triple.replace('-', '_')}"] = str(ndkc / "llvm-ar")
     env[f"CARGO_TARGET_{triple.replace('-', '_').upper()}_LINKER"] = str(clang)
     env["CARGO_TARGET_DIR"] = str(target_dir)
-    env["CARGO_NET_OFFLINE"] = "true"
+    # No CARGO_NET_OFFLINE here: the seed build (base.yml, has network) must
+    # populate ~/modbuild/cargo. The mod build runs sandboxed with no network
+    # at all, and the restored base cache holds every locked dependency, so
+    # no downloads are attempted there either.
     return env
 
 
