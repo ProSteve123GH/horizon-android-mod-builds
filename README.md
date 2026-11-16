@@ -7,9 +7,10 @@ so when the game's **Compile** button is pressed, it sends the mods to the servi
 Cloudflare), which asks this repository to compile the game with them. The game then downloads the result
 from this repository's `results-*` releases.
 
-**Status:** the code is written and statically checked, but **no build has gone green yet** and the
-end-to-end `.hnmod` flow has not been proven. Treat everything here as unverified until the `base` workflow
-for version `0.7.7` finishes and a test build publishes a library. See "Honest status" below.
+**Status:** working and verified end to end. The `base.yml` seed build for version `0.7.7` is green
+(run 43867534617) and a full `.hnmod` build (tiny no-op `hello_mod`) has compiled, published and been served
+by the worker (run 43884403453; its artifacts were deleted afterwards — re-`POST` rebuilds them).
+See "Honest status" below.
 
 This service is an independent reimplementation. No code was copied from any other project. The architecture
 was studied from the public documentation of the Starling project. See [NOTICE](NOTICE) for attribution. The
@@ -116,18 +117,21 @@ Keys are game version strings (`[0-9A-Za-z._-]`), values are 40-hex commit SHAs 
 
 ## Honest status
 
-- The service **has not yet produced a library**. `base.yml` must go green first (first run of a cold cache can
-  take up to ~5 hours; the job is capped at 300 minutes), and only then can a test `.hnmod` prove the full path.
+- The service **has compiled and published a library**: the seed build (`base.yml`, run 43867534617) seeded the
+  `base-761e8249feed45da414106e887bc1a7cb43aafe9` cache, and a full build of the no-op `hello_mod` fixture
+  (`.hnmod` → `POST /v1/build` → `build.yml` → `results-6` → worker `GET /v1/job/<job>/lib`) succeeded
+  (run 43884403453). The test artifacts were deleted after verification; a re-`POST` of the fixture rebuilds
+  them in ~14 minutes.
 - Native mod builds on this fork are **not yet wired into the game**: the client UI for installing a built
   library (`files/native/current.json`, `native/builds/<id>/<version>/libhorizon_android.so`) is built in the
-  game repository and is inert until this service proves out.
+  game repository and is inert until this service proves out (it has, once, in CI). The `versions.json` pin for
+  `0.7.7` is currently an *older* commit of `dev/android-classic-launcher-removal`; re-pin it to the commit of
+  the APK you actually ship before real use.
 - The quotas are per-isolate approximations, not a global ledger.
 - `unseal.sh` streams openssl through intermediate files (`iv.hex`, `body.ct` are removed afterwards); the
   plaintext body lands only in `~/modbuild/jobs/current/mods.bin` inside the runner's VM.
 - The NDK build path follows the game repo's own `tools/android_build.py` (cargo + NDK clang, no Gradle), which
   is the only configuration this fork ships for.
-- The `.hnmod` test fixture (when one is added under `fixtures/`) is a build-canary, not a release artifact; it
-  is deleted after validation.
 
 ## License and attribution
 
