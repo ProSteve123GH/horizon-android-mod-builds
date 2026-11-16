@@ -15,6 +15,12 @@ set -uo pipefail
 export MODBUILD="${MODBUILD:-$HOME/modbuild}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# The sandbox only sees ~/modbuild (and read-only system trees); stage the
+# builder there first.
+mkdir -p "$MODBUILD/jobs/current/bin"
+cp "$SCRIPT_DIR/mod_build_once.py" "$SCRIPT_DIR/native_mod_permissions.py" "$MODBUILD/jobs/current/bin/"
+BUILDER="$MODBUILD/jobs/current/bin/mod_build_once.py"
+
 run_bwrap() {
   bwrap \
     --ro-bind /usr /usr \
@@ -34,7 +40,7 @@ run_bwrap() {
     --unshare-net \
     --unshare-pid \
     --die-with-parent \
-    python3 "$SCRIPT_DIR/mod_build_once.py"
+    python3 "$BUILDER"
 }
 
 if command -v bwrap >/dev/null 2>&1; then
@@ -48,11 +54,11 @@ if command -v bwrap >/dev/null 2>&1; then
     exit "$code"
   fi
   echo "WARNING: bwrap failed ($code); falling back to network-only isolation (NO filesystem confinement)" >&2
-  exec sudo -E MODBUILD="$MODBUILD" HOME="$HOME" unshare --net python3 "$SCRIPT_DIR/mod_build_once.py"
+  exec sudo -E MODBUILD="$MODBUILD" HOME="$HOME" unshare --net python3 "$BUILDER"
 fi
 
 echo "WARNING: bwrap not found; falling back to network-only isolation (NO filesystem confinement)" >&2
 if sudo -n true 2>/dev/null; then
-  exec sudo -E MODBUILD="$MODBUILD" HOME="$HOME" unshare --net python3 "$SCRIPT_DIR/mod_build_once.py"
+  exec sudo -E MODBUILD="$MODBUILD" HOME="$HOME" unshare --net python3 "$BUILDER"
 fi
-exec unshare --net python3 "$SCRIPT_DIR/mod_build_once.py"
+exec unshare --net python3 "$BUILDER"

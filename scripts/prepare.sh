@@ -29,6 +29,19 @@ git -C "$SRC" remote add origin "$REPO_URL"
 git -C "$SRC" fetch --depth 1 origin "$COMMIT"
 git -C "$SRC" checkout -q FETCH_HEAD
 
+# horizon-mixins refuses staged inputs that contain symlinks. Replace every
+# symlink with the bytes it points at (this checkout is a throwaway).
+find "$SRC" -type l | while IFS= read -r link; do
+  if cp -L "$link" "$link.dereferenced" 2>/dev/null; then
+    mv "$link.dereferenced" "$link"
+    echo "prepare: dereferenced symlink $link"
+  else
+    rm -f "$link.dereferenced"
+    echo "prepare: WARNING: dropping broken symlink $link" >&2
+    rm -f "$link"
+  fi
+done
+
 echo "COMMIT=$COMMIT" >> "${GITHUB_ENV:-/dev/null}"
 # And as a step output for workflow expressions (cache keys, expressions).
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
