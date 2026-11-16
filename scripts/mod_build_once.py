@@ -301,10 +301,15 @@ def cargo_env(target_dir: pathlib.Path) -> dict:
     env[f"AR_{triple.replace('-', '_')}"] = str(ndkc / "llvm-ar")
     env[f"CARGO_TARGET_{triple.replace('-', '_').upper()}_LINKER"] = str(clang)
     env["CARGO_TARGET_DIR"] = str(target_dir)
-    # No CARGO_NET_OFFLINE here: the seed build (base.yml, has network) must
-    # populate ~/modbuild/cargo. The mod build runs sandboxed with no network
-    # at all, and the restored base cache holds every locked dependency, so
-    # no downloads are attempted there either.
+    # The warmed registry/index lives here; without it cargo looks in ~/.cargo,
+    # finds nothing, and tries crates.io even though every locked crate is
+    # cached. With a complete cache --offline never hits the network (and the
+    # mod sandbox has none anyway); the seed build is warm too (tools.sh runs
+    # cargo fetch on the pinned source).
+    home = pathlib.Path.home()
+    env["CARGO_HOME"] = str(home / "modbuild" / "cargo")
+    env["RUSTUP_HOME"] = str(home / ".rustup")
+    env["CARGO_NET_OFFLINE"] = "true"
     return env
 
 
