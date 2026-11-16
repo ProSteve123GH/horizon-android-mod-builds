@@ -51,6 +51,7 @@ def main() -> int:
         return 2
 
     result_dir = modbuild / "result"
+    result_dir.mkdir(parents=True, exist_ok=True)
     status_path = result_dir / "status.json"
     lib_path = result_dir / "libhorizon_android.so"
     tag = f"results-{job[0]}"

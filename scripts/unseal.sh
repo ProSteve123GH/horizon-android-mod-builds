@@ -35,7 +35,7 @@ COMMIT="${COMMIT:?COMMIT must be set by prepare.sh (via \$GITHUB_ENV)}"
 
 CURRENT="$MODBUILD/jobs/current"
 mkdir -p "$CURRENT"
-gh release download "$ASK.bin" -R "$REPO" --dir "$CURRENT" --pattern "$ASK.bin" --clobber
+gh release download requests -R "$REPO" --dir "$CURRENT" --pattern "$ASK.bin" --clobber
 
 # Split iv || ciphertext the worker concatenated.
 python3 - "$CURRENT/$ASK.bin" "$CURRENT/iv.hex" "$CURRENT/body.ct" <<'PY'
