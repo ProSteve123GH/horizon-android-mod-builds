@@ -318,6 +318,20 @@ def horizon_mixins() -> str:
     raise BuildError("horizon-mixins not on PATH (run tools.sh)")
 
 
+def tool_env() -> dict:
+    """Environment for horizon-mixins: needs cargo on PATH and the toolchain."""
+    home = pathlib.Path.home()
+    cargo_bin = home / "modbuild" / "cargo" / "bin"
+    toolchain = home / ".rustup" / "toolchains" / "1.95.0-x86_64-unknown-linux-gnu" / "bin"
+    env = dict(os.environ)
+    env["PATH"] = os.pathsep.join(
+        [str(cargo_bin), str(toolchain), env.get("PATH", "")]
+    )
+    env["RUSTUP_HOME"] = str(home / ".rustup")
+    env["CARGO_HOME"] = str(home / "modbuild" / "cargo")
+    return env
+
+
 def main() -> int:
     commit = os.environ.get("COMMIT", "")
     version = os.environ.get("VERSION", "")
@@ -346,7 +360,7 @@ def main() -> int:
     mods_stage = modbuild / "jobs" / "current" / "mods-stage"
     for d in (stage, mods_stage):
         shutil.rmtree(d, ignore_errors=True)
-    stage.mkdir(parents=True)
+    mods_stage.mkdir(parents=True)
 
     status: dict = {
         "state": "failed",
@@ -385,6 +399,7 @@ def main() -> int:
                     str(stage),
                 ],
                 check=True,
+                env=tool_env(),
             )
         else:
             print("seed build: no mods, using the source tree directly")
