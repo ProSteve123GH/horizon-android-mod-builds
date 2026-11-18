@@ -159,7 +159,7 @@ test('POST is answered from the results release when the job already exists', as
   assert.ok(!fetchImpl.calls.some((c) => c.url.includes('/dispatches')), 'no rebuild dispatched');
 });
 
-test('POST reports a settled failure without rebuilding', async () => {
+test('POST rebuilds a settled failure instead of caching it', async () => {
   const body = Buffer.from('broken-mods');
   const job = expectedJob('0.7.7', COMMIT, new Uint8Array(body));
   const tag = `results-${job[0]}`;
@@ -177,16 +177,23 @@ test('POST reports a settled failure without rebuilding', async () => {
       match: (u) => u === 'asset-fail',
       respond: () => new Response(JSON.stringify({state: 'failed', error: 'compile error'}), {status: 200}),
     },
+    {
+      match: (u) => u.includes('/releases/tags/requests'),
+      respond: () => new Response(JSON.stringify({id: 7, assets: []}), {status: 200}),
+    },
+    uploadRoute,
+    dispatchRoute,
   ]);
   const res = await handle(
     req('/v1/build?version=0.7.7', {method: 'POST', body}),
     env(),
     {fetch: fetchImpl},
   );
-  assert.equal(res.status, 200);
+  assert.equal(res.status, 202);
   const data = await res.json();
-  assert.equal(data.state, 'failed');
-  assert.ok(!fetchImpl.calls.some((c) => c.url.includes('/dispatches')));
+  assert.equal(data.job, job);
+  assert.equal(data.state, 'pending');
+  assert.ok(fetchImpl.calls.some((c) => c.url.includes('/dispatches')), 'a retry dispatches a new build');
 });
 
 test('POST rejects an unknown version and dispatches nothing', async () => {
