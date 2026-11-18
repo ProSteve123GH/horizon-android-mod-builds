@@ -2,7 +2,9 @@
 
 A personal, unofficial build service for **native mods on the Horizon Android port**
 (`horizon-android-old`). Native mods are [horizon-mixins](https://github.com/horizon-rust/horizon-mixins)
-bundles: Rust source that patches the game's own code before it is compiled. A phone cannot do that itself,
+bundles: Rust source that patches the game's own code before it is compiled, using a
+[patched Android-compatible fork of horizon-mixins](https://github.com/ProSteve123GH/horizon-mixins)
+pinned in `scripts/mixins.env`. A phone cannot do that itself,
 so when the game's **Compile** button is pressed, it sends the mods to the service here (`worker/`, on
 Cloudflare), which asks this repository to compile the game with them. The game then downloads the result
 from this repository's `results-*` releases.

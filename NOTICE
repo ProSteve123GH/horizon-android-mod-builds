@@ -17,8 +17,10 @@ from any other project. The architecture was studied from public documentation:
   taken from that repository.
 - horizon-mixins (MIT, https://github.com/horizon-rust/horizon-mixins) by
   levzzz5154: the mixin tool used to apply native mod bundles to Horizon's
-  source at build time. It is installed at a pinned revision
-  (ddd9700b21997c95d95ac6ee5ecafe3830cf622a) by the base workflow.
+  source at build time. This service installs the patched Android-compatible
+  fork (https://github.com/ProSteve123GH/horizon-mixins) at the pin recorded in
+  scripts/mixins.env. Upstream LICENSE is unchanged; the fork's changes add
+  target-aware cfg handling and Android support.
 - Horizon (https://github.com/horizon-rust/horizon) by horizon-rust and its
   contributors: the game this service recompiles. The Android fork built here
   is ProSteve123GH/horizon-android-old.

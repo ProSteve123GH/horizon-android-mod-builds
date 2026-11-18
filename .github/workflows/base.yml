@@ -38,4 +38,4 @@ jobs:
             ~/android
             ~/modbuild/cargo
             ~/modbuild/base
-          key: base-${{ steps.prepare.outputs.commit }}
+          key: base-${{ steps.prepare.outputs.commit }}-${{ hashFiles('scripts/mixins.env') }}

@@ -49,7 +49,18 @@ import subprocess
 import sys
 import zipfile
 
-MIXINS_REV = "ddd9700b21997c95d95ac6ee5ecafe3830cf622a"
+def _mixins_env() -> dict[str, str]:
+    """Read the shared tool pin (same file tools.sh sources)."""
+    values = {}
+    for line in pathlib.Path(__file__).with_name("mixins.env").read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            values[key.strip()] = value.strip()
+    return values
+
+
+MIXINS_REV = _mixins_env()["MIXINS_REV"]
 NDK_VERSION = "28.2.13676358"
 PROFILE = os.environ.get("PROFILE", "fast")
 ABI = os.environ.get("ABI", "arm64-v8a")

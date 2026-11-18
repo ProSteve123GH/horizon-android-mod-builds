@@ -7,6 +7,8 @@
 #   - the ~/modbuild layout: source/ base/ cargo/ jobs/ result/
 set -euo pipefail
 
+source "$(dirname "$0")/mixins.env"
+
 export RUSTUP_HOME="$HOME/.rustup"
 export CARGO_HOME="$HOME/modbuild/cargo"
 export PATH="$CARGO_HOME/bin:$RUSTUP_HOME/toolchains/1.95.0-x86_64-unknown-linux-gnu/bin:$PATH"
@@ -50,7 +52,8 @@ else
 fi
 
 cargo install --locked cargo-ndk || true
-cargo install --locked --git https://github.com/horizon-rust/horizon-mixins \
-  --rev ddd9700b21997c95d95ac6ee5ecafe3830cf622a horizon-mixins-cli
+# The base cache can already contain an older tool; force reinstall on a pin change.
+rm -f "$CARGO_HOME/bin/horizon-mixins"
+cargo install --locked --force --git "$MIXINS_URL" --rev "$MIXINS_REV" horizon-mixins-cli
 
 echo "tools.sh: base dependencies ready"
