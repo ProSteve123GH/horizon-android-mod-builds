@@ -29,6 +29,22 @@ git -C "$SRC" remote add origin "$REPO_URL"
 git -C "$SRC" fetch --depth 1 origin "$COMMIT"
 git -C "$SRC" checkout -q FETCH_HEAD
 
+# horizon-mixins treats any crate-level cfg_attr as an unresolved cfg gate and
+# refuses to index `pub mod game`, so no mod can target horizon_client::game::*.
+# This attribute is inert for the Android target this service builds for; drop
+# it from the throwaway checkout only (the player's APK is untouched).
+python3 - "$SRC/crates/horizon-client/src/lib.rs" <<'PY'
+import sys
+p = sys.argv[1]
+needle = '#![cfg_attr(not(target_os = "android"), forbid(unsafe_code))]\n'
+text = open(p).read()
+if needle not in text:
+    print('prepare: WARNING: expected crate-root cfg_attr not found', file=sys.stderr)
+else:
+    open(p, 'w').write(text.replace(needle, '', 1))
+    print('prepare: removed crate-root cfg_attr (inert on Android)')
+PY
+
 # horizon-mixins refuses staged inputs that contain symlinks. Replace every
 # symlink with the bytes it points at (this checkout is a throwaway).
 find "$SRC" -type l | while IFS= read -r link; do
