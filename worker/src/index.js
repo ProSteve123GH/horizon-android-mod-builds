@@ -308,7 +308,10 @@ async function handleBuild(request, url, env, fetchImpl) {
   } catch (e) {
     return json({ error: `result lookup failed: ${e.message}` }, 502);
   }
-  if (cached && (cached.state === 'done' || cached.state === 'failed')) {
+  // Only successful builds are reusable. Caching a failure made every retry
+  // of the same .hnmod (same content address) return the old error without
+  // ever rebuilding, forcing users to delete result tags to force a retry.
+  if (cached && cached.state === 'done') {
     return json({ job, cached: true, ...cached }, 200);
   }
 

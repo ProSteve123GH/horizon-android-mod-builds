@@ -210,6 +210,32 @@ def set_horizon_revision(text: str, commit: str) -> str:
     return text.rstrip("\n") + f'\n\n[compatibility]\nhorizon_revision = "{commit}"\n'
 
 
+# Engine commit e108ef6f folded upstream's melee/block-split into the Android
+# fork: four methods that used to be in game.rs now live in submodules, and the
+# mixin tool keys targets by the file the impl is written in. Rewrite only
+# these exact strings, only for that pin; bundles are verified before staging.
+TARGET_REWRITES = {
+    "e108ef6f647b0a71a8498b18a44ffe605b5f74b9": {
+        "horizon_client::game::Game<'_>::attack": "horizon_client::game::melee::Game<'_>::attack",
+        "horizon_client::game::Game<'_>::break_block": "horizon_client::game::block_breaking::Game<'_>::break_block",
+        "horizon_client::game::Game<'_>::destroy_particles": "horizon_client::game::block_particles::Game<'_>::destroy_particles",
+        "horizon_client::game::Game<'_>::crack_particle": "horizon_client::game::block_particles::Game<'_>::crack_particle",
+    },
+}
+
+
+def rewrite_targets(text: str, commit: str) -> str:
+    """Point stale game.rs targets at the module that now defines the method."""
+    for old, new in TARGET_REWRITES.get(commit, {}).items():
+        pattern = re.compile(
+            r'(?m)^(\s*target\s*=\s*)"' + re.escape(old) + r'"(\s*(?:#.*)?)$'
+        )
+        text, count = pattern.subn(lambda m: f'{m.group(1)}"{new}"{m.group(2)}', text)
+        if count:
+            print(f"rewrite target: {old} -> {new} ({count} injection(s))")
+    return text
+
+
 def load_mods_bin(mods_bin: pathlib.Path) -> list[tuple[dict, bytes]]:
     """Read + validate mods.bin. Returns [(manifest entry, .hnmod bytes)]."""
     try:
@@ -254,10 +280,8 @@ def stage_mods(pairs, stage: pathlib.Path) -> list[dict]:
         mixin_toml = target / "horizon-mixin.toml"
         if not mixin_toml.is_file():
             raise BuildError(f"bundle {entry['file']!r}: mixins/{entry['id']}/horizon-mixin.toml missing")
-        mixin_toml.write_text(
-            set_horizon_revision(mixin_toml.read_text(), os.environ["COMMIT"]),
-            encoding="utf-8",
-        )
+        text = set_horizon_revision(mixin_toml.read_text(), os.environ["COMMIT"])
+        mixin_toml.write_text(rewrite_targets(text, os.environ["COMMIT"]), encoding="utf-8")
         infos.append(info)
     return infos
 

@@ -24,7 +24,12 @@ import sys
 
 
 def gh(*args: str, check=True) -> subprocess.CompletedProcess:
-    return subprocess.run(["gh", *args], check=check, capture_output=True, text=True)
+    proc = subprocess.run(["gh", *args], check=False, capture_output=True, text=True)
+    if check and proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout).strip()
+        print(f"gh {' '.join(args)} failed ({proc.returncode}): {detail}", file=sys.stderr)
+        raise subprocess.CalledProcessError(proc.returncode, proc.args, proc.stdout, proc.stderr)
+    return proc
 
 
 def main() -> int:
@@ -55,6 +60,18 @@ def main() -> int:
     status_path = result_dir / "status.json"
     lib_path = result_dir / "libhorizon_android.so"
     tag = f"results-{job[0]}"
+
+    # Job ids are content-addressed, so a job can start with any hex digit.
+    # Only 0-9/a/c/d/f had release shards, which made publish.py crash and
+    # left the worker polling forever for a failure status.
+    if gh("release", "view", tag, "--repo", repo, check=False).returncode != 0:
+        made = gh(
+            "release", "create", tag, "--repo", repo, "--prerelease",
+            "--title", tag, "--notes", "Build result shard", check=False,
+        )
+        if made.returncode != 0:
+            print(f"could not create release {tag}", file=sys.stderr)
+            return 2
 
     status = None
     if status_path.is_file():
