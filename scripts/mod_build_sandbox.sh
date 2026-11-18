@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # The sandbox only sees ~/modbuild (and read-only system trees); stage the
 # builder there first.
 mkdir -p "$MODBUILD/jobs/current/bin"
-cp "$SCRIPT_DIR/mod_build_once.py" "$SCRIPT_DIR/native_mod_permissions.py" "$MODBUILD/jobs/current/bin/"
+cp "$SCRIPT_DIR/mod_build_once.py" "$SCRIPT_DIR/native_mod_permissions.py" "$SCRIPT_DIR/mixins.env" "$MODBUILD/jobs/current/bin/"
 BUILDER="$MODBUILD/jobs/current/bin/mod_build_once.py"
 
 run_bwrap() {
