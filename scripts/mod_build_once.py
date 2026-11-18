@@ -215,18 +215,20 @@ def set_horizon_revision(text: str, commit: str) -> str:
 # mixin tool keys targets by the file the impl is written in. Rewrite only
 # these exact strings, only for that pin; bundles are verified before staging.
 TARGET_REWRITES = {
-    "e108ef6f647b0a71a8498b18a44ffe605b5f74b9": {
-        "horizon_client::game::Game<'_>::attack": "horizon_client::game::melee::Game<'_>::attack",
-        "horizon_client::game::Game<'_>::break_block": "horizon_client::game::block_breaking::Game<'_>::break_block",
-        "horizon_client::game::Game<'_>::destroy_particles": "horizon_client::game::block_particles::Game<'_>::destroy_particles",
-        "horizon_client::game::Game<'_>::crack_particle": "horizon_client::game::block_particles::Game<'_>::crack_particle",
-    },
+    "horizon_client::game::Game<'_>::attack": "horizon_client::game::melee::Game<'_>::attack",
+    "horizon_client::game::Game<'_>::break_block": "horizon_client::game::block_breaking::Game<'_>::break_block",
+    "horizon_client::game::Game<'_>::destroy_particles": "horizon_client::game::block_particles::Game<'_>::destroy_particles",
+    "horizon_client::game::Game<'_>::crack_particle": "horizon_client::game::block_particles::Game<'_>::crack_particle",
 }
 
 
 def rewrite_targets(text: str, commit: str) -> str:
-    """Point stale game.rs targets at the module that now defines the method."""
-    for old, new in TARGET_REWRITES.get(commit, {}).items():
+    """Point stale game.rs targets at the module that now defines the method.
+
+    Layout-based, not commit-based: otherwise the rewrite would disappear on
+    the next re-pin. The old strings only occur in stale manifests.
+    """
+    for old, new in TARGET_REWRITES.items():
         pattern = re.compile(
             r'(?m)^(\s*target\s*=\s*)"' + re.escape(old) + r'"(\s*(?:#.*)?)$'
         )
